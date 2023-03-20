@@ -1,1 +1,79 @@
-"Hello World"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Chatbot with File Input</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div id="chat-container">
+        <div id="chat-history"></div>
+        <form id="chat-form">
+            <input type="text" name="message" id="message-input" placeholder="Type your message here...">
+            <button type="submit" id="send-button">Send</button>
+        </form>
+        <form id="file-upload-form" enctype="multipart/form-data">
+            <input type="file" name="file" id="file-input">
+            <button type="submit" id="upload-button">Upload</button>
+        </form>
+    </div>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script type="text/javascript">
+        $(document).ready(function() {
+            var $chatHistory = $('#chat-history');
+            var $messageInput = $('#message-input');
+            var $fileInput = $('#file-input');
+
+            $('#chat-form').submit(function(event) {
+                event.preventDefault();
+                var message = $messageInput.val();
+                sendMessage(message);
+            });
+
+            $('#file-upload-form').submit(function(event) {
+                event.preventDefault();
+                var file = $fileInput.prop('files')[0];
+                uploadFile(file);
+            });
+
+            function sendMessage(message) {
+                if (message.trim() == '') {
+                    return;
+                }
+                $messageInput.val('');
+                var $messageBubble = $('<div class="message-bubble">').text(message);
+                $chatHistory.append($messageBubble);
+                scrollToBottom();
+                $.post('/chat', {'message': message}, function(data) {
+                    var response = data.response;
+                    var $responseBubble = $('<div class="response-bubble">').text(response);
+                    $chatHistory.append($responseBubble);
+                    scrollToBottom();
+                });
+            }
+
+            function uploadFile(file) {
+                var formData = new FormData();
+                formData.append('file', file);
+                $.ajax({
+                    url: '/upload',
+                    type: 'POST',
+                    data: formData,
+                    processData: false,
+                    contentType: false,
+                    success: function(data) {
+                        var response = data.response;
+                        var $responseBubble = $('<div class="response-bubble">').text(response);
+                        $chatHistory.append($responseBubble);
+                        scrollToBottom();
+                    }
+                });
+            }
+
+            function scrollToBottom() {
+                $chatHistory.scrollTop($chatHistory[0].scrollHeight);
+            }
+        });
+    </script>
+</body>
+</html>
